@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable, loadTables, saveTables, DataRow } from '@/services/dataService';
@@ -336,7 +337,7 @@ const QueryData: React.FC = () => {
           value = String(Number(value)); // Convert number to string to fix type error
         }
         
-        const updatedData = [...table.data];
+        let updatedData = [...table.data]; // Changed const to let
         let updatedCount = 0;
         
         if (whereClause) {
@@ -406,7 +407,7 @@ const QueryData: React.FC = () => {
         return true;
       }
     } else {
-      const updatedData = [...table.data];
+      let updatedData = [...table.data]; // Changed const to let
       const updatedCount = updatedData.length;
       updatedData = updatedData.map(row => ({ ...row, ...setItems }));
       
@@ -441,7 +442,7 @@ const QueryData: React.FC = () => {
       return true;
     }
     
-    let updatedData = [...table.data];
+    let updatedData = [...table.data]; // Changed const to let
     let deletedCount = 0;
     
     if (whereClause) {
