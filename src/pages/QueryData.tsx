@@ -538,7 +538,7 @@ const QueryData: React.FC = () => {
     columns.forEach((col, index) => {
       let value = values[index];
       if (!isNaN(Number(value)) && value !== '') {
-        newRow[col] = Number(value);
+        newRow[col] = String(Number(value)); // Convert number to string to fix type error
       } else {
         newRow[col] = value;
       }
@@ -746,7 +746,7 @@ const QueryData: React.FC = () => {
               }
               
               if (typeof value === 'string') {
-                return value.toLowerCase().includes(numbers[0].toString());
+                return value.toLowerCase().includes(String(numbers[0]));
               }
               
               return false;
