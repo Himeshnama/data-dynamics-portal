@@ -317,14 +317,11 @@ const QueryData: React.FC = () => {
       let value = setMatch[2] !== undefined ? setMatch[2] : setMatch[3].trim();
       
       if (!isNaN(Number(value)) && value !== '') {
-        value = Number(value);
+        value = String(Number(value)); // Convert number to string to fix type error
       }
       
       setItems[column] = value;
     }
-    
-    let updatedData = [...table.data];
-    let updatedCount = 0;
     
     if (whereClause) {
       const wherePattern = /["']?([^"'=]+)["']?\s*(=|>|<|>=|<=|LIKE|!=)\s*(?:["']([^"']+)["']|([^,\s]+))/i;
@@ -336,61 +333,96 @@ const QueryData: React.FC = () => {
         let value = whereMatch[3] !== undefined ? whereMatch[3] : whereMatch[4].trim();
         
         if (!isNaN(Number(value)) && value !== '') {
-          value = Number(value);
+          value = String(Number(value)); // Convert number to string to fix type error
         }
         
-        updatedData = updatedData.map(row => {
-          const rowValue = row[column];
-          let matches = false;
+        const updatedData = [...table.data];
+        let updatedCount = 0;
+        
+        if (whereClause) {
+          const wherePattern = /["']?([^"'=]+)["']?\s*(=|>|<|>=|<=|LIKE|!=)\s*(?:["']([^"']+)["']|([^,\s]+))/i;
+          const whereMatch = whereClause.match(wherePattern);
           
-          switch (operator) {
-            case '=':
-              matches = rowValue == value;
-              break;
-            case '>':
-              matches = rowValue > value;
-              break;
-            case '<':
-              matches = rowValue < value;
-              break;
-            case '>=':
-              matches = rowValue >= value;
-              break;
-            case '<=':
-              matches = rowValue <= value;
-              break;
-            case '!=':
-              matches = rowValue != value;
-              break;
-            case 'LIKE':
-              matches = String(rowValue).includes(String(value).replace(/%/g, ''));
-              break;
+          if (whereMatch) {
+            const column = whereMatch[1].replace(/['"]/g, '').trim();
+            const operator = whereMatch[2].trim().toUpperCase();
+            let value = whereMatch[3] !== undefined ? whereMatch[3] : whereMatch[4].trim();
+            
+            if (!isNaN(Number(value)) && value !== '') {
+              value = String(Number(value)); // Convert number to string to fix type error
+            }
+            
+            updatedData = updatedData.map(row => {
+              const rowValue = row[column];
+              let matches = false;
+              
+              switch (operator) {
+                case '=':
+                  matches = rowValue == value;
+                  break;
+                case '>':
+                  matches = rowValue > value;
+                  break;
+                case '<':
+                  matches = rowValue < value;
+                  break;
+                case '>=':
+                  matches = rowValue >= value;
+                  break;
+                case '<=':
+                  matches = rowValue <= value;
+                  break;
+                case '!=':
+                  matches = rowValue != value;
+                  break;
+                case 'LIKE':
+                  matches = String(rowValue).includes(String(value).replace(/%/g, ''));
+                  break;
+              }
+              
+              if (matches) {
+                updatedCount++;
+                return { ...row, ...setItems };
+              }
+              return row;
+            });
           }
-          
-          if (matches) {
-            updatedCount++;
-            return { ...row, ...setItems };
-          }
-          return row;
+        } else {
+          updatedCount = updatedData.length;
+          updatedData = updatedData.map(row => ({ ...row, ...setItems }));
+        }
+        
+        const updatedTable = { ...table, data: updatedData };
+        const updatedTables = tables.map(t => t.id === table.id ? updatedTable : t);
+        
+        setTables(updatedTables);
+        setSelectedTable(updatedTable);
+        saveTables(updatedTables);
+        
+        toast({
+          title: "Update successful",
+          description: `Updated ${updatedCount} row(s) in table "${tableName}"`,
         });
+        return true;
       }
     } else {
-      updatedCount = updatedData.length;
+      const updatedData = [...table.data];
+      const updatedCount = updatedData.length;
       updatedData = updatedData.map(row => ({ ...row, ...setItems }));
+      
+      const updatedTable = { ...table, data: updatedData };
+      const updatedTables = tables.map(t => t.id === table.id ? updatedTable : t);
+      
+      setTables(updatedTables);
+      setSelectedTable(updatedTable);
+      saveTables(updatedTables);
+      
+      toast({
+        title: "Update successful",
+        description: `Updated ${updatedCount} row(s) in table "${tableName}"`,
+      });
+      return true;
     }
-    
-    const updatedTable = { ...table, data: updatedData };
-    const updatedTables = tables.map(t => t.id === table.id ? updatedTable : t);
-    
-    setTables(updatedTables);
-    setSelectedTable(updatedTable);
-    saveTables(updatedTables);
-    
-    toast({
-      title: "Update successful",
-      description: `Updated ${updatedCount} row(s) in table "${tableName}"`,
-    });
-    return true;
   };
 
   const executeDeleteQuery = (query: string, table: DataTable): boolean => {
@@ -422,7 +454,7 @@ const QueryData: React.FC = () => {
         let value = whereMatch[3] !== undefined ? whereMatch[3] : whereMatch[4].trim();
         
         if (!isNaN(Number(value)) && value !== '') {
-          value = Number(value);
+          value = String(Number(value)); // Convert number to string to fix type error
         }
         
         const beforeCount = updatedData.length;
@@ -620,7 +652,7 @@ const QueryData: React.FC = () => {
             let cleanValue = value.trim().replace(/['"]/g, '');
             
             if (!isNaN(Number(cleanValue))) {
-              cleanValue = `${Number(cleanValue)}`;
+              cleanValue = String(Number(cleanValue)); // Convert number to string to fix type error
             }
             
             filteredData = filteredData.filter(row => {
