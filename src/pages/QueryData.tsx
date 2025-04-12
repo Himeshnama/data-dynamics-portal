@@ -730,7 +730,7 @@ const QueryData: React.FC = () => {
         const hasEqual = normalizedQuery.includes('equal to') || normalizedQuery.includes('equals') || normalizedQuery.includes('=');
         
         const numberMatches = normalizedQuery.match(/\d+/g);
-        const numbers = numberMatches ? numbers.map(n => parseInt(n, 10)) : [];
+        const numbers = numberMatches ? numberMatches.map(n => parseInt(n, 10)) : [];
         
         if (columnFilters.length > 0 && numbers.length > 0) {
           filteredData = filteredData.filter(row => {
