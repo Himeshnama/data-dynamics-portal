@@ -37,7 +37,6 @@ const QueryData: React.FC = () => {
   const [newTableName, setNewTableName] = useState<string>('');
   const [columnToDelete, setColumnToDelete] = useState<string>('');
   
-  // Voice assistant integration
   const { transcript, isListening, startListening, stopListening, resetTranscript, hasRecognitionSupport } = useSpeechRecognition();
 
   useEffect(() => {
@@ -878,3 +877,495 @@ const QueryData: React.FC = () => {
             <TabsTrigger value="text" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
               <Search className="w-4 h-4 mr-2" />
               Natural Language
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="sql" className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <div className="flex gap-2">
+                  <select 
+                    value={queryType} 
+                    onChange={(e) => setQueryType(e.target.value)}
+                    className="bg-gray-900 text-white border border-gray-700 rounded-md p-2"
+                  >
+                    <option value="SELECT">SELECT</option>
+                    <option value="UPDATE">UPDATE</option>
+                    <option value="DELETE">DELETE</option>
+                    <option value="INSERT">INSERT</option>
+                    <option value="ALTER_RENAME">ALTER TABLE RENAME</option>
+                    <option value="ALTER_ADD">ALTER TABLE ADD COLUMN</option>
+                    <option value="ALTER_DROP">ALTER TABLE DROP COLUMN</option>
+                  </select>
+                  
+                  <Button 
+                    onClick={generateSqlQuery}
+                    variant="default"
+                    className="flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Generate Query
+                  </Button>
+                </div>
+                {hasRecognitionSupport && (
+                  <VoiceAssistant 
+                    onTranscript={(text) => setSqlQuery(text)}
+                    isListening={isListening}
+                    startListening={startListening}
+                    stopListening={stopListening}
+                  />
+                )}
+              </div>
+              
+              {queryType === 'SELECT' && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="text-white border-gray-700 bg-gray-900">
+                      <List className="w-4 h-4 mr-2" />
+                      Configure SELECT Query
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-gray-900 text-white border border-gray-700">
+                    <DialogHeader>
+                      <DialogTitle>Configure SELECT Query</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div>
+                        <Label className="text-white">Columns</Label>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {selectedTable?.columns.map(col => (
+                            <div key={col} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`col-${col}`}
+                                checked={selectedColumns.includes(col)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedColumns([...selectedColumns, col]);
+                                  } else {
+                                    setSelectedColumns(selectedColumns.filter(c => c !== col));
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={`col-${col}`} className="text-white">{col}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-white">Limit Results</Label>
+                        <Input
+                          type="number"
+                          value={limitValue}
+                          onChange={(e) => setLimitValue(e.target.value)}
+                          className="bg-gray-800 border-gray-700 text-white mt-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-white">Order By</Label>
+                        <div className="flex gap-2 mt-2">
+                          <select
+                            value={orderByColumn}
+                            onChange={(e) => setOrderByColumn(e.target.value)}
+                            className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                          >
+                            <option value="">-- Select Column --</option>
+                            {selectedTable?.columns.map(col => (
+                              <option key={col} value={col}>{col}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={orderDirection}
+                            onChange={(e) => setOrderDirection(e.target.value)}
+                            className="bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                          >
+                            <option value="ASC">Ascending</option>
+                            <option value="DESC">Descending</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-white">Where Condition</Label>
+                        <div className="flex gap-2 mt-2">
+                          <select
+                            value={whereColumn}
+                            onChange={(e) => setWhereColumn(e.target.value)}
+                            className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                          >
+                            <option value="">-- Select Column --</option>
+                            {selectedTable?.columns.map(col => (
+                              <option key={col} value={col}>{col}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={whereOperator}
+                            onChange={(e) => setWhereOperator(e.target.value)}
+                            className="bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                          >
+                            <option value="=">=</option>
+                            <option value=">">{">"}</option>
+                            <option value="<">{"<"}</option>
+                            <option value=">=">{"≥"}</option>
+                            <option value="<=">{"≤"}</option>
+                            <option value="!=">{"≠"}</option>
+                            <option value="LIKE">LIKE</option>
+                          </select>
+                          <Input
+                            value={whereValue}
+                            onChange={(e) => setWhereValue(e.target.value)}
+                            className="flex-1 bg-gray-800 border-gray-700 text-white"
+                            placeholder="Value"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+
+              {queryType === 'UPDATE' && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="text-white border-gray-700 bg-gray-900">
+                      <Edit className="w-4 h-4 mr-2" />
+                      Configure UPDATE Query
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-gray-900 text-white border border-gray-700">
+                    <DialogHeader>
+                      <DialogTitle>Configure UPDATE Query</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div>
+                        <Label className="text-white">SET Values</Label>
+                        {setValues.map((setItem, index) => (
+                          <div key={index} className="flex gap-2 mt-2">
+                            <select
+                              value={setItem.column}
+                              onChange={(e) => updateSetValue(index, 'column', e.target.value)}
+                              className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                            >
+                              <option value="">-- Select Column --</option>
+                              {selectedTable?.columns.map(col => (
+                                <option key={col} value={col}>{col}</option>
+                              ))}
+                            </select>
+                            <Input
+                              value={setItem.value}
+                              onChange={(e) => updateSetValue(index, 'value', e.target.value)}
+                              className="flex-1 bg-gray-800 border-gray-700 text-white"
+                              placeholder="Value"
+                            />
+                            <Button 
+                              variant="destructive" 
+                              size="icon"
+                              onClick={() => removeSetValue(index)}
+                            >
+                              <Trash className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          variant="outline"
+                          className="mt-2 w-full text-white border-gray-700"
+                          onClick={addSetValue}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add SET Value
+                        </Button>
+                      </div>
+
+                      <div>
+                        <Label className="text-white">Where Condition</Label>
+                        <div className="flex gap-2 mt-2">
+                          <select
+                            value={whereColumn}
+                            onChange={(e) => setWhereColumn(e.target.value)}
+                            className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                          >
+                            <option value="">-- Select Column --</option>
+                            {selectedTable?.columns.map(col => (
+                              <option key={col} value={col}>{col}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={whereOperator}
+                            onChange={(e) => setWhereOperator(e.target.value)}
+                            className="bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                          >
+                            <option value="=">=</option>
+                            <option value=">">{">"}</option>
+                            <option value="<">{"<"}</option>
+                            <option value=">=">{"≥"}</option>
+                            <option value="<=">{"≤"}</option>
+                            <option value="!=">{"≠"}</option>
+                            <option value="LIKE">LIKE</option>
+                          </select>
+                          <Input
+                            value={whereValue}
+                            onChange={(e) => setWhereValue(e.target.value)}
+                            className="flex-1 bg-gray-800 border-gray-700 text-white"
+                            placeholder="Value"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+
+              {queryType === 'DELETE' && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="text-white border-gray-700 bg-gray-900">
+                      <Trash className="w-4 h-4 mr-2" />
+                      Configure DELETE Query
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-gray-900 text-white border border-gray-700">
+                    <DialogHeader>
+                      <DialogTitle>Configure DELETE Query</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div>
+                        <Label className="text-white">Where Condition</Label>
+                        <div className="flex gap-2 mt-2">
+                          <select
+                            value={whereColumn}
+                            onChange={(e) => setWhereColumn(e.target.value)}
+                            className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                          >
+                            <option value="">-- Select Column --</option>
+                            {selectedTable?.columns.map(col => (
+                              <option key={col} value={col}>{col}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={whereOperator}
+                            onChange={(e) => setWhereOperator(e.target.value)}
+                            className="bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                          >
+                            <option value="=">=</option>
+                            <option value=">">{">"}</option>
+                            <option value="<">{"<"}</option>
+                            <option value=">=">{"≥"}</option>
+                            <option value="<=">{"≤"}</option>
+                            <option value="!=">{"≠"}</option>
+                            <option value="LIKE">LIKE</option>
+                          </select>
+                          <Input
+                            value={whereValue}
+                            onChange={(e) => setWhereValue(e.target.value)}
+                            className="flex-1 bg-gray-800 border-gray-700 text-white"
+                            placeholder="Value"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-yellow-400 text-sm">
+                        <b>Warning:</b> If no condition is specified, all rows will be deleted!
+                      </p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+
+              {queryType === 'INSERT' && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="text-white border-gray-700 bg-gray-900">
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      Configure INSERT Query
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-gray-900 text-white border border-gray-700">
+                    <DialogHeader>
+                      <DialogTitle>Configure INSERT Query</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div>
+                        <Label className="text-white">Columns</Label>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {selectedTable?.columns.map(col => (
+                            <div key={col} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`insert-col-${col}`}
+                                checked={selectedColumns.includes(col)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedColumns([...selectedColumns, col]);
+                                  } else {
+                                    setSelectedColumns(selectedColumns.filter(c => c !== col));
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={`insert-col-${col}`} className="text-white">{col}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-white">Values</Label>
+                        {selectedColumns.map((col, index) => (
+                          <div key={col} className="flex gap-2 mt-2">
+                            <div className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-md p-2">
+                              {col}
+                            </div>
+                            <Input
+                              value={(setValues.find(sv => sv.column === col) || { value: '' }).value}
+                              onChange={(e) => {
+                                const existingIndex = setValues.findIndex(sv => sv.column === col);
+                                if (existingIndex >= 0) {
+                                  updateSetValue(existingIndex, 'value', e.target.value);
+                                } else {
+                                  setSetValues([...setValues, { column: col, value: e.target.value }]);
+                                }
+                              }}
+                              className="flex-1 bg-gray-800 border-gray-700 text-white"
+                              placeholder="Value"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+
+              {queryType === 'ALTER_RENAME' && (
+                <div className="flex gap-2 items-center">
+                  <Label className="text-white whitespace-nowrap">New Table Name:</Label>
+                  <Input
+                    value={newTableName}
+                    onChange={(e) => setNewTableName(e.target.value)}
+                    className="bg-gray-800 border-gray-700 text-white"
+                    placeholder="Enter new table name"
+                  />
+                </div>
+              )}
+
+              {queryType === 'ALTER_ADD' && (
+                <div className="flex gap-2 items-center">
+                  <Label className="text-white whitespace-nowrap">New Column Name:</Label>
+                  <Input
+                    value={newColumnName}
+                    onChange={(e) => setNewColumnName(e.target.value)}
+                    className="bg-gray-800 border-gray-700 text-white"
+                    placeholder="Enter new column name"
+                  />
+                </div>
+              )}
+
+              {queryType === 'ALTER_DROP' && (
+                <div className="flex gap-2 items-center">
+                  <Label className="text-white whitespace-nowrap">Column to Delete:</Label>
+                  <select
+                    value={columnToDelete}
+                    onChange={(e) => setColumnToDelete(e.target.value)}
+                    className="flex-1 bg-gray-800 text-white border border-gray-700 rounded-md p-2"
+                  >
+                    <option value="">-- Select Column --</option>
+                    {selectedTable?.columns.map(col => (
+                      <option key={col} value={col}>{col}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            
+            <Textarea 
+              value={sqlQuery}
+              onChange={(e) => setSqlQuery(e.target.value)}
+              placeholder="Enter SQL query..."
+              className="min-h-[120px] bg-gray-800 border-gray-700 text-white font-mono"
+            />
+          </TabsContent>
+          
+          <TabsContent value="text" className="space-y-4">
+            <div className="flex gap-2">
+              {hasRecognitionSupport && (
+                <VoiceAssistant 
+                  onTranscript={(text) => setTextQuery(text)}
+                  isListening={isListening}
+                  startListening={startListening}
+                  stopListening={stopListening}
+                />
+              )}
+            </div>
+            
+            <Textarea 
+              value={textQuery}
+              onChange={(e) => setTextQuery(e.target.value)}
+              placeholder="Enter query in plain English, e.g. 'Show all users where age is greater than 30'"
+              className="min-h-[120px] bg-gray-800 border-gray-700 text-white"
+            />
+            
+            <div className="text-sm text-gray-400">
+              <p>Example queries:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Show all customers ordered by name</li>
+                <li>Find products where price is greater than 100</li>
+                <li>Get top 5 orders by amount</li>
+              </ul>
+            </div>
+          </TabsContent>
+        </Tabs>
+        
+        <div className="mt-4">
+          <Button
+            onClick={handleExecuteQuery}
+            className="w-full sm:w-auto bg-gold-500 hover:bg-gold-600 text-black"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Executing...
+              </>
+            ) : (
+              <>
+                <Database className="w-4 h-4 mr-2" />
+                Execute Query
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+      
+      {queryResults.length > 0 && (
+        <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+          <h2 className="text-xl font-semibold text-white mb-4">Results ({queryResults.length})</h2>
+          
+          <div className="overflow-x-auto">
+            <Table className="w-full">
+              <TableHeader>
+                <TableRow>
+                  {resultColumns.map(column => (
+                    <TableHead key={column} className="text-gold-300">
+                      {column}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {queryResults.map((row, index) => (
+                  <TableRow key={index}>
+                    {resultColumns.map(column => (
+                      <TableCell key={column} className="text-white">
+                        {row[column] !== undefined ? String(row[column]) : ''}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default QueryData;
