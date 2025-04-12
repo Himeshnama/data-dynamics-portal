@@ -1,11 +1,39 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Database, BarChart, Home, FileType, Search } from 'lucide-react';
+import { Database, BarChart, Home, FileType, Search, Menu, X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Navbar: React.FC = () => {
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const navItems = [
+    { path: '/', label: 'Home', icon: Home },
+    { path: '/dashboard', label: 'Data', icon: Database },
+    { path: '/visualization', label: 'Visualize', icon: BarChart },
+    { path: '/query', label: 'Query', icon: Search },
+    { path: '/converter', label: 'Convert', icon: FileType },
+  ];
+  
+  const NavButton = ({ path, label, icon: Icon }) => (
+    <Link to={path} onClick={() => setIsOpen(false)}>
+      <Button
+        variant={location.pathname === path ? 'default' : 'ghost'}
+        className={location.pathname === path ? 'bg-gold-500 text-black' : 'text-white hover:text-gold-300'}
+      >
+        <Icon className="w-4 h-4 mr-2" />
+        {label}
+      </Button>
+    </Link>
+  );
   
   return (
     <header className="bg-black shadow-md py-4 fixed top-0 left-0 right-0 z-50">
@@ -17,53 +45,40 @@ const Navbar: React.FC = () => {
           <span className="text-xl font-semibold text-white">DataViz</span>
         </Link>
 
-        <nav className="flex items-center gap-4">
-          <Link to="/">
-            <Button
-              variant={location.pathname === '/' ? 'default' : 'ghost'}
-              className={location.pathname === '/' ? 'bg-gold-500 text-black' : 'text-white hover:text-gold-300'}
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Home
-            </Button>
-          </Link>
-          <Link to="/dashboard">
-            <Button
-              variant={location.pathname === '/dashboard' ? 'default' : 'ghost'}
-              className={location.pathname === '/dashboard' ? 'bg-gold-500 text-black' : 'text-white hover:text-gold-300'}
-            >
-              <Database className="w-4 h-4 mr-2" />
-              Data
-            </Button>
-          </Link>
-          <Link to="/visualization">
-            <Button
-              variant={location.pathname === '/visualization' ? 'default' : 'ghost'}
-              className={location.pathname === '/visualization' ? 'bg-gold-500 text-black' : 'text-white hover:text-gold-300'}
-            >
-              <BarChart className="w-4 h-4 mr-2" />
-              Visualize
-            </Button>
-          </Link>
-          <Link to="/query">
-            <Button
-              variant={location.pathname === '/query' ? 'default' : 'ghost'}
-              className={location.pathname === '/query' ? 'bg-gold-500 text-black' : 'text-white hover:text-gold-300'}
-            >
-              <Search className="w-4 h-4 mr-2" />
-              Query
-            </Button>
-          </Link>
-          <Link to="/converter">
-            <Button
-              variant={location.pathname === '/converter' ? 'default' : 'ghost'}
-              className={location.pathname === '/converter' ? 'bg-gold-500 text-black' : 'text-white hover:text-gold-300'}
-            >
-              <FileType className="w-4 h-4 mr-2" />
-              Convert
-            </Button>
-          </Link>
-        </nav>
+        {isMobile ? (
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="p-2 text-white">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[250px] bg-black border-l border-gold-500">
+              <div className="flex flex-col space-y-4 mt-8">
+                {navItems.map((item) => (
+                  <Link 
+                    key={item.path} 
+                    to={item.path} 
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center p-2 rounded-md ${
+                      location.pathname === item.path 
+                        ? 'bg-gold-500 text-black' 
+                        : 'text-white hover:bg-gold-700/20'
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5 mr-3" />
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
+        ) : (
+          <nav className="flex items-center gap-4">
+            {navItems.map((item) => (
+              <NavButton key={item.path} {...item} />
+            ))}
+          </nav>
+        )}
       </div>
     </header>
   );
