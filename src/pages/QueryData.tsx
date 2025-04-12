@@ -100,7 +100,7 @@ const QueryData: React.FC = () => {
         query += `FROM "${selectedTable.name}" `;
         
         if (whereColumn && whereOperator && whereValue) {
-          const formattedValue = isNaN(Number(whereValue)) ? `"${whereValue}"` : whereValue;
+          const formattedValue = isNaN(Number(whereValue)) ? `"${whereValue}"` : `${whereValue}`;
           query += `WHERE "${whereColumn}" ${whereOperator} ${formattedValue} `;
         }
         
@@ -118,7 +118,7 @@ const QueryData: React.FC = () => {
         
         if (setValues.length > 0) {
           const setStatements = setValues.map(item => {
-            const formattedValue = isNaN(Number(item.value)) ? `"${item.value}"` : item.value;
+            const formattedValue = isNaN(Number(item.value)) ? `"${item.value}"` : `${item.value}`;
             return `"${item.column}" = ${formattedValue}`;
           });
           query += setStatements.join(', ') + ' ';
@@ -127,7 +127,7 @@ const QueryData: React.FC = () => {
         }
         
         if (whereColumn && whereOperator && whereValue) {
-          const formattedValue = isNaN(Number(whereValue)) ? `"${whereValue}"` : whereValue;
+          const formattedValue = isNaN(Number(whereValue)) ? `"${whereValue}"` : `${whereValue}`;
           query += `WHERE "${whereColumn}" ${whereOperator} ${formattedValue}`;
         }
         break;
@@ -136,7 +136,7 @@ const QueryData: React.FC = () => {
         query = `DELETE FROM "${selectedTable.name}" `;
         
         if (whereColumn && whereOperator && whereValue) {
-          const formattedValue = isNaN(Number(whereValue)) ? `"${whereValue}"` : whereValue;
+          const formattedValue = isNaN(Number(whereValue)) ? `"${whereValue}"` : `${whereValue}`;
           query += `WHERE "${whereColumn}" ${whereOperator} ${formattedValue}`;
         }
         break;
@@ -620,7 +620,7 @@ const QueryData: React.FC = () => {
             let cleanValue = value.trim().replace(/['"]/g, '');
             
             if (!isNaN(Number(cleanValue))) {
-              cleanValue = Number(cleanValue);
+              cleanValue = `${Number(cleanValue)}`;
             }
             
             filteredData = filteredData.filter(row => {
